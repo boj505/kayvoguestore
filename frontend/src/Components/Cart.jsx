@@ -455,7 +455,7 @@ const Cart = ({ handleCart }) => {
 
               {/* Payment icons */}
               <div className="pt-1 flex items-center justify-center gap-2 flex-wrap">
-                {['Visa', 'Mastercard', 'Verve', 'Paystack'].map((p) => (
+                {['Visa', 'Mastercard', 'Verve'].map((p) => (
                   <span
                     key={p}
                     className="font-[clash_display] text-[8px] tracking-[0.12em] uppercase text-black/20 border border-black/10 px-2 py-1"

@@ -45,7 +45,7 @@ const REVIEWS = [
   { id: 3, name: 'Chidinma R.', rating: 4, date: 'Jan 2025', verified: true, body: 'Good quality and fast delivery. The colour is exactly as shown. Slightly thicker than expected but honestly that is a plus — feels durable.' },
 ]
 
-const PAYMENT_ICONS = ['Visa', 'MC', 'PayPal', 'Paystack', 'Flutterwave']
+const PAYMENT_ICONS = ['Visa', 'MC', 'PayPal', 'Flutterwave']
 const FREE_SHIPPING_THRESHOLD = 55000
 const RECENTLY_VIEWED_KEY = 'kv_recently_viewed'
 const MAX_RECENTLY_VIEWED = 8

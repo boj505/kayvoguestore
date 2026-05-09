@@ -11,7 +11,7 @@ import {
   ArrowBackOutlined,
   DeleteOutlineOutlined,
 } from '@mui/icons-material'
-import { PaystackButton } from 'react-paystack'
+
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
@@ -262,11 +262,10 @@ const CheckoutPage = () => {
   const { user } = useAuth()
   const navigate  = useNavigate()
 
-  const [step,          setStep]          = useState(1)
-  const [isSubmitting,  setIsSubmitting]  = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState('paystack')
-  const [receiptFile,   setReceiptFile]   = useState(null)
-  const [errors,        setErrors]        = useState({})
+  const [step,         setStep]         = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [receiptFile,  setReceiptFile]  = useState(null)
+  const [errors,       setErrors]       = useState({})
 
   const [form, setForm] = useState({
     email:     '',
@@ -281,9 +280,8 @@ const CheckoutPage = () => {
     phone:     '',
   })
 
-  const deliveryFee   = getDeliveryFee(form.state)
-  const totalPayable  = cartTotal + (step >= 2 && form.state ? deliveryFee : 0)
-  const publicKey     = import.meta.env.VITE_PUBLIC_KEY || 'pk_test_2863ca74c49da5b15efc7790010243021e8c1726'
+  const deliveryFee  = getDeliveryFee(form.state)
+  const totalPayable = cartTotal + (step >= 2 && form.state ? deliveryFee : 0)
 
   useEffect(() => {
     if (user?.email) setForm(f => ({ ...f, email: user.email }))
@@ -330,13 +328,13 @@ const CheckoutPage = () => {
   }
 
   // ── Order builders ──────────────────────────────────────────────────
-  const buildWooPayload = (method = 'paystack', receiptPayload = null) => {
+  const buildWooPayload = (receiptPayload = null) => {
     const fee = getDeliveryFee(form.state)
     const payload = {
-      payment_method:       method === 'paystack' ? 'paystack' : 'opay_transfer',
-      payment_method_title: method === 'paystack' ? 'Paystack'  : 'OPay Transfer',
-      set_paid:             method === 'paystack',
-      status:               method !== 'paystack' ? 'on-hold' : undefined,
+      payment_method:       'opay_transfer',
+      payment_method_title: 'OPay Transfer',
+      set_paid:             false,
+      status:               'on-hold',
       billing: {
         first_name: form.firstName, last_name: form.lastName,
         address_1:  form.address,   address_2: form.apartment,
@@ -353,10 +351,8 @@ const CheckoutPage = () => {
       line_items:     cart.map(i => ({ product_id: i.id, quantity: i.qty })),
       shipping_total: fee.toFixed(2),
       shipping_lines: [{ method_id: 'flat_rate', method_title: 'Delivery', total: fee.toFixed(2) }],
-    }
-    if (method === 'opay_transfer') {
-      payload.customer_note = 'OPay transfer payment. Receipt uploaded for review.'
-      payload.meta_data = [{ key: 'opay_payment_type', value: 'OPay Transfer' }]
+      customer_note:  'OPay transfer payment. Receipt uploaded for review.',
+      meta_data:      [{ key: 'opay_payment_type', value: 'OPay Transfer' }],
     }
     if (receiptPayload) {
       payload.receiptFilename = receiptPayload.filename
@@ -378,7 +374,7 @@ const CheckoutPage = () => {
     return res.json()
   }
 
-  const saveLocalOrder = (wooOrder, method = 'Paystack') => {
+  const saveLocalOrder = (wooOrder, method = 'OPay Transfer') => {
     const order = {
       id:          wooOrder?.id ? `WC-${wooOrder.id}` : `ORD-${Date.now()}`,
       wooOrderId:  wooOrder?.id ?? null,
@@ -386,7 +382,7 @@ const CheckoutPage = () => {
       userId:      user?.id || null,
       userEmail:   user?.email || form.email,
       paymentMethod: wooOrder?.payment_method_title || method,
-      status:      wooOrder?.status || 'paid',
+      status:      wooOrder?.status || 'on-hold',
       total:       Number(wooOrder?.total ?? totalPayable),
       shippingFee: deliveryFee,
       shippingAddress: {
@@ -418,42 +414,18 @@ const CheckoutPage = () => {
     try {
       const base64    = await readAsBase64(receiptFile)
       const wooOrder  = await createWooOrder(
-        buildWooPayload('opay_transfer', { filename: receiptFile.name, base64 })
+        buildWooPayload({ filename: receiptFile.name, base64 })
       )
-      const order = saveLocalOrder(wooOrder, 'OPay Transfer')
+      const order = saveLocalOrder(wooOrder)
       clearCart()
       toast.success('Order submitted successfully!')
       navigate('/order-confirmation', { state: { orderId: order.id } })
     } catch (err) {
       toast.error('Could not submit order. Please try again.')
-      console.log(err);
-      
+      console.log(err)
     } finally {
       setIsSubmitting(false)
-
     }
-
-  }
-
-  // Paystack config
-  const paystackProps = {
-    email:     form.email,
-    amount:    Math.max(0, Math.round(totalPayable * 100)),
-    metadata:  { firstName: form.firstName, lastName: form.lastName, phone: form.phone },
-    publicKey,
-    text:      'Pay now',
-    onSuccess: async () => {
-      try {
-        const wooOrder = await createWooOrder(buildWooPayload('paystack'))
-        const order    = saveLocalOrder(wooOrder, 'Paystack')
-        clearCart()
-        toast.success('Payment successful!')
-        navigate('/order-confirmation', { state: { orderId: order.id } })
-      } catch {
-        toast.error('Payment succeeded but order save failed. Contact support.')
-      }
-    },
-    onClose: () => toast.info('Payment cancelled'),
   }
 
   // ── Empty cart ──────────────────────────────────────────────────────
@@ -753,108 +725,39 @@ const CheckoutPage = () => {
                       </h2>
                     </div>
 
-                    {/* Options */}
-                    <div className="space-y-2.5 mb-6">
-                      {[
-                        {
-                          value:    'paystack',
-                          label:    'Paystack',
-                          sublabel: 'Card, bank transfer, USSD — instant payment',
-                          Icon:     CreditCardOutlined,
-                        },
-                        {
-                          value:    'opay_transfer',
-                          label:    'OPay Transfer',
-                          sublabel: 'Transfer to our OPay account and upload receipt',
-                          Icon:     UploadFileOutlined,
-                        },
-                      ].map(opt => (
-                        <label
-                          key={opt.value}
-                          className={`
-                            flex items-center gap-4 p-4 cursor-pointer
-                            border transition-all duration-200
-                            ${paymentMethod === opt.value
-                              ? 'border-[#0a0a0a] bg-[#0a0a0a]/[0.02]'
-                              : 'border-black/10 hover:border-black/25'
-                            }
-                          `}
-                        >
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value={opt.value}
-                            checked={paymentMethod === opt.value}
-                            onChange={() => setPaymentMethod(opt.value)}
-                            className="sr-only"
-                          />
-                          <div className={`
-                            w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0
-                            transition-all duration-150
-                            ${paymentMethod === opt.value ? 'border-[#0a0a0a]' : 'border-black/20'}
-                          `}>
-                            {paymentMethod === opt.value && (
-                              <div className="w-2 h-2 rounded-full bg-[#0a0a0a]" />
-                            )}
-                          </div>
-                          <opt.Icon style={{ fontSize: 18 }} className="text-black/35 flex-shrink-0" />
-                          <div>
-                            <p className="font-[clash_display] text-[10.5px] tracking-[0.1em] uppercase text-[#0a0a0a]">
-                              {opt.label}
-                            </p>
-                            <p className="font-[clash_display] text-[9px] tracking-[0.06em] text-black/35 mt-0.5">
-                              {opt.sublabel}
-                            </p>
-                          </div>
-                        </label>
-                      ))}
+                    <div className="space-y-6 mb-6">
+                      <div className="bg-[#faf9f7] border border-black/8 p-5 space-y-4">
+                        <div>
+                          <p className="font-[clash_display] text-[9px] tracking-[0.18em] uppercase text-black/40 mb-2">
+                            Transfer details
+                          </p>
+                          <p className="font-[clash_display] text-[11px] tracking-[0.06em] text-[#0a0a0a]">
+                            OPay Account: <span className="font-semibold">912 627 2971</span>
+                          </p>
+                          <p className="font-[clash_display] text-[10px] tracking-[0.06em] text-[#0a0a0a] mt-1">
+                            Amount: <span className="font-semibold">{fmt(totalPayable)}</span>
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block font-[clash_display] text-[9px] tracking-[0.18em] uppercase text-black/80 mb-2">
+                            Upload payment receipt
+                          </label>
+                          <label className="flex items-center gap-3 h-11 px-4 border border-dashed border-black/20 cursor-pointer hover:border-black/40 transition-colors duration-200">
+                            <UploadFileOutlined style={{ fontSize: 16 }} className="text-black/70" />
+                            <span className="font-[clash_display] text-[10px] tracking-[0.06em] text-black/80">
+                              {receiptFile ? receiptFile.name : 'Choose file (image or PDF)'}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="sr-only"
+                              onChange={e => setReceiptFile(e.target.files?.[0] ?? null)}
+                            />
+                          </label>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* OPay instructions */}
-                    <AnimatePresence>
-                      {paymentMethod === 'opay_transfer' && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.28 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="bg-[#faf9f7] border border-black/8 p-5 mb-6 space-y-4">
-                            <div>
-                              <p className="font-[clash_display] text-[9px] tracking-[0.18em] uppercase text-black/40 mb-2">
-                                Transfer details
-                              </p>
-                              <p className="font-[clash_display] text-[11px] tracking-[0.06em] text-[#0a0a0a]">
-                                OPay Account: <span className="font-semibold">912 627 2971</span>
-                              </p>
-                              <p className="font-[clash_display] text-[10px] tracking-[0.06em] text-[#0a0a0a] mt-1">
-                                Amount: <span className="font-semibold">{fmt(totalPayable)}</span>
-                              </p>
-                            </div>
-                            <div>
-                              <label className="block font-[clash_display] text-[9px] tracking-[0.18em] uppercase text-black/80 mb-2">
-                                Upload payment receipt
-                              </label>
-                              <label className="flex items-center gap-3 h-11 px-4 border border-dashed border-black/20 cursor-pointer hover:border-black/40 transition-colors duration-200">
-                                <UploadFileOutlined style={{ fontSize: 16 }} className="text-black/70" />
-                                <span className="font-[clash_display] text-[10px] tracking-[0.06em] text-black/80">
-                                  {receiptFile ? receiptFile.name : 'Choose file (image or PDF)'}
-                                </span>
-                                <input
-                                  type="file"
-                                  accept="image/*,.pdf"
-                                  className="sr-only"
-                                  onChange={e => setReceiptFile(e.target.files?.[0] ?? null)}
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Order total line */}
                     <div className="flex items-center justify-between py-4 border-t border-b border-black/8 mb-6">
                       <span className="font-[clash_display] text-[10px] tracking-[0.18em] uppercase text-black/70">
                         Total payable
@@ -864,22 +767,14 @@ const CheckoutPage = () => {
                       </span>
                     </div>
 
-                    {/* CTA */}
-                    {paymentMethod === 'paystack' ? (
-                      <PaystackButton
-                        {...paystackProps}
-                        className="w-full h-13 bg-[#0a0a0a] text-white font-[clash_display] text-[10px] tracking-[0.26em] uppercase hover:bg-[#2a2a2a] transition-colors duration-300 cursor-pointer flex items-center justify-center gap-2 h-12"
-                      />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleOpaySubmit}
-                        disabled={isSubmitting}
-                        className="w-full h-12 bg-[#0a0a0a] text-white font-[clash_display] text-[10px] tracking-[0.26em] uppercase hover:bg-[#2a2a2a] transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {isSubmitting ? 'Submitting…' : 'Submit OPay order'}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={handleOpaySubmit}
+                      disabled={isSubmitting}
+                      className="w-full h-12 bg-[#0a0a0a] text-white font-[clash_display] text-[10px] tracking-[0.26em] uppercase hover:bg-[#2a2a2a] transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? 'Submitting…' : 'Submit OPay order'}
+                    </button>
 
                     {/* Security badge */}
                     <div className="mt-4 flex items-center justify-center gap-2">

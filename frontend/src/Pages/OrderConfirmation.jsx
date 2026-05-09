@@ -281,7 +281,7 @@ const OrderConfirmation = () => {
                 <div className="bg-white border border-black/[0.07] px-6 py-6">
                   <p className="text-[9px] uppercase tracking-[0.4em] text-gray-400 mb-3">Payment</p>
                   <p className="text-sm font-semibold text-[#111]">
-                    {order.paymentMethod || order.payment_method_title || order.payment_method || 'Paystack'}
+                    {order.paymentMethod || order.payment_method_title || order.payment_method || 'OPay Transfer'}
                   </p>
                   <p className="mt-1.5 text-xs text-gray-500 leading-6">
                     Securely processed.<br />No card data is stored.

@@ -291,7 +291,7 @@ const OrderCard = ({ order, products, index }) => {
             <div className="bg-white px-5 sm:px-7 py-5">
               <p className="text-[9px] uppercase tracking-[0.4em] text-gray-400 mb-3">Payment method</p>
               <p className="text-sm font-semibold text-[#111]">
-                {order.payment_method_title || order.payment_method || order.paymentMethod || 'Paystack'}
+                {order.payment_method_title || order.payment_method || order.paymentMethod || 'OPay Transfer'}
               </p>
             </div>
 

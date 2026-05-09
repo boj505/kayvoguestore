@@ -229,12 +229,12 @@ const FAQ_DATA = [
       {
         id: 15,
         q: 'What payment methods do you accept?',
-        a: 'We accept all major cards via Paystack, bank transfers, and USSD payments. All transactions are encrypted and secure.',
+        a: 'We accept all major cards, bank transfers, and USSD payments. All transactions are encrypted and secure.',
       },
       {
         id: 16,
         q: 'Is my payment information safe?',
-        a: 'Yes. We process all payments through Paystack, a PCI-compliant payment gateway. We never store card details on our servers.',
+        a: 'Yes. We process payments through a PCI-compliant gateway. We never store card details on our servers.',
       },
       {
         id: 17,
