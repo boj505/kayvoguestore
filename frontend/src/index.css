@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;   
+@tailwind utilities;
+
+
+
+
+
+.animated-heading, .animated-slides {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeSlideUp 1s ease-out forwards;
+}
+
+@keyframes fadeSlideUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.transition-fadeIn {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
