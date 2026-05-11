@@ -20,11 +20,11 @@ import CheckoutPage from './Pages/CheckoutPage'
 import OrderConfirmation from './Pages/OrderConfirmation'
 import CartPage from './Pages/Cart'
 import FAQs from './Pages/Faqs'
-import ProtectedRoute from './components/ProtectedRoute'
+import ProtectedRoute from './Components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
 import { WishlistProvider } from './context/WishlistProvider'
 import { CartProvider } from './context/CartContext'
-import MoveToTop from './Components/MoveToTop'
+import MoveToTop from './Components/moveToTop'
 
 
 
