@@ -16,7 +16,6 @@ import CategoriesPage from './Pages/CategoriesPage'
 import CategoryPage from './Pages/CategoryPage'
 import Product from './Pages/Product'
 import Wishlist from './Pages/Wishlist'
-import MoveToTop from './Components/moveToTop'
 import CheckoutPage from './Pages/CheckoutPage'
 import OrderConfirmation from './Pages/OrderConfirmation'
 import CartPage from './Pages/Cart'
@@ -34,7 +33,6 @@ function App() {
       <WishlistProvider>
     <CartProvider>
       <BrowserRouter>
-        <MoveToTop />
         <Toaster position="top-right" richColors />
         <Routes>
           <Route path="/" element={<Layout />}>
