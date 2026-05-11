@@ -19,7 +19,7 @@ const {
   WP_URL,
   WP_USER,
   WP_APP_PASSWORD,
-  ALLOWED_ORIGIN = 'http://localhost:5175',
+  ALLOWED_ORIGIN = 'https://kayvoguestores.vercel.app',
   PORT = 3000,
 } = process.env
 
