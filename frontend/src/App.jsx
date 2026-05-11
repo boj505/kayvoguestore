@@ -24,7 +24,7 @@ import ProtectedRoute from './Components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
 import { WishlistProvider } from './context/WishlistProvider'
 import { CartProvider } from './context/CartContext'
-import MoveToTop from './Components/moveToTop'
+import MoveToTop from './Components/MoveToTop'
 
 
 
